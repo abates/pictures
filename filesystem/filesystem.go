@@ -5,7 +5,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 )
+
+type FileReader interface {
+	ReadFile(filename string) ([]byte, error)
+}
+
+type FileWriter interface {
+	WriteFile(filename string, data []byte, perm os.FileMode) error
+}
 
 type Filesystem interface {
 	Open(filename string) (io.ReadWriteCloser, error)
@@ -26,6 +35,7 @@ func NewOSFilesystem(rootpath string) *OSFilesystem {
 }
 
 func (osf *OSFilesystem) path(filename string) string {
+	filename = filepath.Clean(filename)
 	return path.Join(osf.rootpath, filename)
 }
 

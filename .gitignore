@@ -10,3 +10,9 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+build/
+node_modules/
+test/integration/screenshots-current/
+
+_site/
+.DS_Store
