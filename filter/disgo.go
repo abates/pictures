@@ -6,17 +6,16 @@ import (
 	"strconv"
 
 	"github.com/abates/disgo"
+	"github.com/abates/pictures/db"
 )
 
 type DisgoFilter struct {
-	db    *disgo.DB
-	dirty bool
+	db *db.DisgoDB
 }
 
-func NewDisgoFilter() *DisgoFilter {
+func NewDisgoFilter(db *db.DisgoDB) *DisgoFilter {
 	return &DisgoFilter{
-		db:    disgo.New(),
-		dirty: false,
+		db: db,
 	}
 }
 
@@ -24,9 +23,6 @@ func (df *DisgoFilter) LoadDB(filename string) error {
 	file, err := os.Open(filename)
 	if err == nil {
 		err = df.db.Load(file)
-		if err == nil {
-			df.dirty = false
-		}
 	}
 	return err
 }
@@ -35,9 +31,6 @@ func (df *DisgoFilter) SaveDB(filename string) error {
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0600)
 	if err == nil {
 		err = df.db.Save(file)
-		if err == nil {
-			df.dirty = false
-		}
 	}
 	return err
 }
@@ -63,20 +56,18 @@ func (df *DisgoFilter) Process(info *ImageInfo) (*ImageInfo, error) {
 				found = true
 			}
 		}
+
 		if !found {
-			df.db.AddHash(hash)
-			df.dirty = true
+			df.db.AddHash(hash, info.Path)
 		}
-		if len(duplicates) == 0 {
+
+		if !found {
 			return info, nil
 		}
+
 		err = &NonfatalError{fmt.Sprintf("duplicate image %v", info.Path)}
 	} else {
 		err = &NonfatalError{fmt.Sprintf("Failed to hash %s: %v\n", info.Path, err)}
 	}
 	return nil, err
-}
-
-func (df *DisgoFilter) DirtyDB() bool {
-	return df.dirty
 }

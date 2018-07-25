@@ -2,7 +2,6 @@ package filter
 
 import (
 	"image"
-	"os"
 )
 
 type ImageFilter interface {
@@ -10,7 +9,6 @@ type ImageFilter interface {
 }
 
 type ImageInfo struct {
-	FI         os.FileInfo
 	Path       string
 	Buf        []byte
 	Img        image.Image

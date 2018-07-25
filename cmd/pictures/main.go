@@ -1,66 +1,43 @@
+//go:generate ./bundle_app.sh
 package main
 
 import (
-	"fmt"
+	"bytes"
+	"flag"
 	"log"
-	"os"
-	"path"
-	"path/filepath"
-	"time"
+	"net/http"
+	"strings"
 
+	"github.com/abates/pictures/api"
 	"github.com/abates/pictures/filesystem"
-	"github.com/abates/pictures/filter"
 )
 
+func fileHandler(w http.ResponseWriter, r *http.Request) {
+	file := strings.TrimLeft(r.URL.Path, "/")
+	if file == "" {
+		file = "index.html"
+	}
+
+	var data []byte
+	fi, err := AssetInfo(file)
+	if err == nil {
+		data, _ = Asset(file)
+	} else {
+		fi, _ = AssetInfo("index.html")
+		data, _ = Asset("index.html")
+	}
+	http.ServeContent(w, r, file, fi.ModTime(), bytes.NewReader(data))
+}
+
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Fprintf(os.Stderr, "Usage: %s <input path> <output path>\n", os.Args[0])
-		os.Exit(1)
-	}
+	dir := flag.String("d", "pictures", "directory to store pictures")
+	port := flag.String("p", "8100", "port to serve on")
+	flag.Parse()
 
-	disgoDbFile := path.Join(os.Args[2], "disgo.db")
-	disgoFilter := filter.NewDisgoFilter()
-	if _, err := os.Stat(disgoDbFile); err == nil {
-		err = disgoFilter.LoadDB(disgoDbFile)
-		if err != nil {
-			log.Fatalf("Failed to load disgo DB: %v\n", err)
-		}
-	}
+	apiHandler := api.New(filesystem.NewOSFilesystem(*dir))
 
-	ticker := time.NewTicker(time.Second * 10)
-	go func() {
-		for range ticker.C {
-			if disgoFilter.DirtyDB() {
-				err := disgoFilter.SaveDB(disgoDbFile)
-				if err != nil {
-					log.Fatalf("Failed to save disgo DB: %v\n", err)
-				}
-			}
-		}
-	}()
-
-	inputFilter := filter.NewImageFileFilter(filesystem.NewOSFilesystem("/"))
-	outputFilter := filter.NewOutputFilter(filesystem.NewOSFilesystem(os.Args[2]))
-
-	processingChain := filter.NewProcessingChain()
-	processingChain.
-		Append(inputFilter).
-		Append(disgoFilter).
-		Append(&filter.ExifFilter{}).
-		Append(&filter.IPTCInputFilter{}).
-		Append(&filter.IPTCOutputFilter{}).
-		AppendLast(outputFilter)
-
-	filepath.Walk(os.Args[1], func(path string, fi os.FileInfo, err error) error {
-		if err == nil {
-			info := filter.NewImageInfo()
-			info.FI = fi
-			info.Path = path
-			processingChain.Input() <- info
-		}
-		return err
-	})
-
-	processingChain.Close()
-	ticker.Stop()
+	http.Handle("/api/", apiHandler)
+	http.HandleFunc("/", fileHandler)
+	log.Printf("Listening on HTTP port: %s\n", *port)
+	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

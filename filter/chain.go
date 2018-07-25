@@ -40,12 +40,10 @@ func NewProcessingChain() *ProcessingChain {
 	}
 }
 
-func (pc *ProcessingChain) Input() chan<- *ImageInfo {
-	return pc.channels[0]
-}
-
-func (pc *ProcessingChain) Output() <-chan *ImageInfo {
-	return pc.channels[len(pc.channels)-1]
+func (pc *ProcessingChain) Push(ii *ImageInfo) {
+	if len(pc.channels) > 0 {
+		pc.channels[0] <- ii
+	}
 }
 
 func (pc *ProcessingChain) AppendLast(filter ImageFilter) {
