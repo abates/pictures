@@ -1,10 +1,8 @@
-package filter
+package pictures
 
 import (
-	"fmt"
 	"io"
 	"os/exec"
-	"strings"
 )
 
 type iptcTag struct {
@@ -16,10 +14,7 @@ type IPTCInputFilter struct{}
 
 func exifCmd() (string, error) {
 	path, err := exec.LookPath("exiftool")
-	if err != nil {
-		return path, &FatalError{err.Error()}
-	}
-	return path, nil
+	return path, err
 }
 
 func runExif(info *ImageInfo, arg ...string) (output []byte, err error) {
@@ -35,14 +30,11 @@ func runExif(info *ImageInfo, arg ...string) (output []byte, err error) {
 
 		output, err = cmd.Output()
 	}
-	if err != nil {
-		err = &FatalError{fmt.Sprintf("%v: %v", strings.Join(cmd.Args, " "), err)}
-	}
 	return output, err
 }
 
 func (iptc *IPTCInputFilter) Process(info *ImageInfo) (*ImageInfo, error) {
-	output, err := runExif(info, "-T", "-Keywords", "-")
+	/*output, err := runExif(info, "-T", "-Keywords", "-")
 	if err == nil {
 		tags := make(map[string]iptcTag)
 		for i, tag := range strings.Split(string(output), ",") {
@@ -52,14 +44,14 @@ func (iptc *IPTCInputFilter) Process(info *ImageInfo) (*ImageInfo, error) {
 				tags[tokens[0]] = iptcTag{i, strings.TrimSpace(tokens[1])}
 			}
 		}
-	}
-	return info, err
+	}*/
+	return info, nil
 }
 
 type IPTCOutputFilter struct{}
 
 func (iptc *IPTCOutputFilter) Process(info *ImageInfo) (*ImageInfo, error) {
-	args := make([]string, 0)
+	/*args := make([]string, 0)
 	for key, v := range info.Properties {
 		args = append(args, fmt.Sprintf("-Keywords=%v:%v", key, v))
 	}
@@ -67,6 +59,6 @@ func (iptc *IPTCOutputFilter) Process(info *ImageInfo) (*ImageInfo, error) {
 	output, err := runExif(info, args...)
 	if err == nil {
 		info.Buf = output
-	}
-	return info, err
+	}*/
+	return info, nil
 }

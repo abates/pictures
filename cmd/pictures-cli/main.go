@@ -7,9 +7,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/abates/pictures/db"
-	"github.com/abates/pictures/filesystem"
-	"github.com/abates/pictures/filter"
+	"github.com/abates/pictures"
 )
 
 func mkdir(path string) {
@@ -37,29 +35,29 @@ func main() {
 	dbPath := path.Join(outputPath, "db")
 	mkdir(dbPath)
 
-	imgdb, err := db.OpenBadger(dbPath)
+	imgdb, err := pictures.OpenBadger(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to open image database: %v", err)
 	}
 	defer imgdb.Close()
 
-	disgoDb, err := db.OpenDisgo(imgdb)
+	disgoDb, err := pictures.OpenDisgo(imgdb)
 	if err != nil {
 		log.Fatalf("Failed to open disgo database: %v", err)
 	}
 	defer disgoDb.Close()
 
-	fs := filesystem.NewOSFilesystem(outputPath)
+	fs := pictures.NewOSFilesystem(outputPath)
 
-	processingChain := filter.NewProcessingChain()
+	processingChain := pictures.NewProcessingChain()
 	processingChain.
-		Append(&filter.ImageDecoderFilter{}).
-		Append(&filter.ExifFilter{}).
-		Append(filter.NewPathFilter(fs)).
-		Append(filter.NewDisgoFilter(disgoDb)).
-		Append(&filter.IPTCInputFilter{}).
-		Append(&filter.IPTCOutputFilter{}).
-		AppendLast(filter.NewOutputFilter(fs))
+		Append(&pictures.ImageDecoderFilter{}).
+		Append(&pictures.ExifFilter{}).
+		Append(pictures.NewPathFilter(fs)).
+		Append(pictures.NewDisgoFilter(disgoDb)).
+		Append(&pictures.IPTCInputFilter{}).
+		Append(&pictures.IPTCOutputFilter{}).
+		AppendLast(pictures.NewOutputFilter(fs))
 
 	filepath.Walk(os.Args[1], func(path string, fi os.FileInfo, err error) error {
 		if err == nil {
@@ -67,7 +65,7 @@ func main() {
 				var buf []byte
 				buf, err = ioutil.ReadFile(path)
 				if err == nil {
-					info := filter.NewImageInfo()
+					info := pictures.NewImageInfo()
 					info.Buf = buf
 					info.Path = path
 					processingChain.Push(info)

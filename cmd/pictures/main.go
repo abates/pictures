@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/abates/pictures"
 	"github.com/abates/pictures/api"
-	"github.com/abates/pictures/filesystem"
 )
 
 func fileHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,11 +30,18 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	dir := flag.String("d", "pictures", "directory to store pictures")
+	debug := flag.Bool("d", false, "enable debugging output")
+	dir := flag.String("o", "pictures", "directory to store pictures")
 	port := flag.String("p", "8100", "port to serve on")
 	flag.Parse()
 
-	apiHandler := api.New(filesystem.NewOSFilesystem(*dir))
+	server, err := pictures.DefaultServer(*dir)
+	if err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+	server.SetDebug(*debug)
+
+	apiHandler := api.New(server)
 
 	http.Handle("/api/", apiHandler)
 	http.HandleFunc("/", fileHandler)

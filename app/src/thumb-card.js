@@ -28,7 +28,7 @@ class ThumbCard extends PolymerElement {
         }
 
         :host(:hover) {
-          border: 2px solid #e76073;
+          border: 2px solid var(--app-highlight-color);
         }
 
         :host(:hover) img {
@@ -44,14 +44,24 @@ class ThumbCard extends PolymerElement {
 
       </style>
 
-      <img id="thumbnail" src="[[photo.thumb]]" on-load="thumbnailLoaded" on-click="showOverlay"></img>
-      <photo-backdrop id="overlay" src="[[photo.src]]" on-click="hideOverlay"></photo-backdrop>
+      <img id="thumbnail" src="[[thumbSrc]]" on-load="thumbnailLoaded" on-click="showOverlay"></img>
+      <photo-backdrop id="overlay" src="[[src]]" on-click="hideOverlay"></photo-backdrop>
     `;
+  }
+
+  _thumbUpdated(newValue, oldValue) {
+    if (this.thumbSrc == undefined) {
+      this.thumbSrc = newValue;
+    }
   }
 
   static get properties() {
     return {
-      photo: Object,
+      src: String,
+      thumb: {
+        type: String,
+        observer: "_thumbUpdated",
+      }
     }
   }
 

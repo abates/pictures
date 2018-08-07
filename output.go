@@ -1,17 +1,14 @@
-package filter
+package pictures
 
 import (
-	"fmt"
 	"path/filepath"
-
-	"github.com/abates/pictures/filesystem"
 )
 
 type OutputFilter struct {
-	fs filesystem.Filesystem
+	fs Filesystem
 }
 
-func NewOutputFilter(fs filesystem.Filesystem) *OutputFilter {
+func NewOutputFilter(fs Filesystem) *OutputFilter {
 	return &OutputFilter{
 		fs: fs,
 	}
@@ -22,8 +19,6 @@ func (of *OutputFilter) Process(info *ImageInfo) (*ImageInfo, error) {
 	err := of.fs.MkdirAll(dir, 0750)
 	if err == nil {
 		err = of.fs.WriteFile(info.Path, info.Buf, 0640)
-	} else {
-		err = &FatalError{fmt.Sprintf("Failed creating %s: %v\n", info.Path, err)}
 	}
 	return info, err
 }

@@ -24,8 +24,12 @@ import '@polymer/app-route/app-location.js';
 import '@polymer/app-route/app-route.js';
 import '@polymer/iron-pages/iron-pages.js';
 import '@polymer/iron-selector/iron-selector.js';
+import '@polymer/paper-dialog/paper-dialog.js';
+import '@polymer/paper-dialog-scrollable/paper-dialog-scrollable.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
 import '@polymer/iron-icon/iron-icon.js';
+import '@vaadin/vaadin-upload/vaadin-upload.js'
+import '@vaadin/vaadin-lumo-styles/color.js';
 import './photo-icons.js';
 
 // Gesture events like tap and track generated from touch will not be
@@ -39,11 +43,12 @@ setRootPath(PhotoAppGlobals.rootPath);
 class PhotoApp extends PolymerElement {
   static get template() {
     return html`
-      <style>
+      <style include="lumo-color">
         :host {
           --app-primary-color: #2d3035;
           --app-primary-text-color: #db6574;
           --app-secondary-color: #8a8d93;
+          --app-highlight-color: #e76073;
           --app-card-background-color: #2d3035;  
           display: block;
         }
@@ -88,6 +93,10 @@ class PhotoApp extends PolymerElement {
         .text-primary {
           color: var(--app-primary-text-color);
         }
+
+        paper-dialog {
+          background-color: var(--app-primary-color);
+        }
       </style>
 
       <app-location route="{{route}}" url-space-regex="^[[rootPath]]">
@@ -100,7 +109,7 @@ class PhotoApp extends PolymerElement {
         <!-- Drawer content -->
         <app-drawer id="drawer" slot="drawer">
           <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-            <a name="home" href="[[rootPath]]home">Home</a>
+            <a name="home" href="[[rootPath]]">Home</a>
             <a name="upload" href="[[rootPath]]upload">Upload</a>
             <a name="view1" href="[[rootPath]]view1">View One</a>
             <a name="view2" href="[[rootPath]]view2">View Two</a>
@@ -114,24 +123,35 @@ class PhotoApp extends PolymerElement {
             <app-toolbar>
               <paper-icon-button icon="photo-icons:menu" drawer-toggle=""></paper-icon-button>
               <div main-title=""><strong class="text-primary">Photo</strong><strong>Manager</strong></div>
+              <paper-icon-button icon="photo-icons:file-upload" on-click="_upload"></paper-icon-button>
             </app-toolbar>
           </app-header>
 
           <iron-pages selected="[[page]]" attr-for-selected="name" role="main">
-            <home-view name="home"></home-view>
+            <home-view name="home" path="[[path]]"></home-view>
             <upload-view name="upload"></upload-view>
             <my-view1 name="view1"></my-view1>
             <my-view2 name="view2"></my-view2>
             <my-view3 name="view3"></my-view3>
-            <view-404 name="view-404"></view-404>
           </iron-pages>
         </app-header-layout>
       </app-drawer-layout>
+      <paper-dialog id="upload" modal="">
+        <paper-dialog-scrollable>
+          <div theme="dark">
+            <vaadin-upload accept="image/*" target="/api/pictures" method="POST"></vaading-upload>
+          </div>
+        </paper-dialog-scrollable>
+        <div class="buttons">
+          <paper-button dialog-confirm autofocus>Tap me to close</paper-button>
+        </div>
+      </paper-dialog>
     `;
   }
 
   static get properties() {
     return {
+      path: String,
       page: {
         type: String,
         reflectToAttribute: true,
@@ -149,16 +169,11 @@ class PhotoApp extends PolymerElement {
   }
 
   _routePageChanged(page) {
-     // Show the corresponding page according to the route.
-     //
-     // If no page was found in the route data, page will be an empty string.
-     // Show 'view1' in that case. And if the page doesn't exist, show 'view-404'.
-    if (!page) {
-      this.page = 'home';
-    } else if (['home', 'upload', 'view1', 'view2', 'view3'].indexOf(page) !== -1) {
+    if (['upload', 'view1', 'view2', 'view3'].indexOf(page) !== -1) {
       this.page = page;
     } else {
-      this.page = 'view-404';
+      this.path = window.location.pathname.replace(/\/$/, "");
+      this.page = 'home';
     }
 
     // Close a non-persistent drawer when the page & route are changed.
@@ -188,10 +203,12 @@ class PhotoApp extends PolymerElement {
       case 'view3':
         import('./my-view3.js');
         break;
-      case 'view-404':
-        import('./view-404.js');
-        break;
     }
+  }
+
+  _upload() {
+    this.$.
+    this.$.upload.open();
   }
 }
 

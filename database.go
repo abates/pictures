@@ -1,4 +1,4 @@
-package db
+package pictures
 
 import (
 	"encoding"
@@ -89,7 +89,7 @@ type DisgoDB struct {
 	dirty  bool
 }
 
-func OpenDisgo(db DB) (*DisgoDB, error) {
+func OpenDisgoDB(db DB) (*DisgoDB, error) {
 	ddb := &DisgoDB{
 		DB:     disgo.New(),
 		imgdb:  db,
